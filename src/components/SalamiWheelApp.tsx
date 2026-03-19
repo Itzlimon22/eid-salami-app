@@ -343,13 +343,13 @@ const SalamiWheelApp = () => {
                 />
               </div>
 
-              <div className="relative w-56 h-56 sm:w-72 sm:h-72 mb-6 sm:mb-8 z-10">
+              <div className="relative w-72 h-72 sm:w-96 sm:h-96 mb-6 sm:mb-8 z-10">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[18px] border-r-[18px] border-t-[36px] sm:border-l-[14px] sm:border-r-[14px] sm:border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_4px_6px_rgba(255,255,255,0.8)]" />
 
                 {activeSegments.length > 0 ? (
                   <>
                     <div
-                      className="w-full h-full rounded-full border-[10px] border-slate-800 overflow-hidden relative shadow-[inset_0_0_30px_rgba(0,0,0,0.8),0_0_60px_rgba(16,185,129,0.2)]"
+                      className="w-full h-full rounded-full border-[16px] border-slate-800 overflow-hidden relative shadow-[inset_0_0_40px_rgba(0,0,0,0.8),0_0_80px_rgba(16,185,129,0.2)]"
                       style={{
                         background: wheelBackground,
                         // Increased to 10 seconds with a realistic ease-out curve
@@ -364,11 +364,11 @@ const SalamiWheelApp = () => {
                         return (
                           <div
                             key={`${index}-${amount}`}
-                            className="absolute top-0 left-1/2 w-10 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-5 z-10"
+                            className="absolute top-0 left-1/2 w-14 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-8 z-10"
                             style={{ transform: `rotate(${rotation}deg)` }}
                           >
                             <span
-                              className="text-slate-100 font-bold text-sm sm:text-base tracking-widest realistic-text-shadow"
+                              className="text-slate-100 font-bold text-base sm:text-lg tracking-widest realistic-text-shadow"
                               style={{
                                 writingMode: "vertical-rl",
                                 transform: "rotate(180deg)",
