@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import { Share2, Download, RefreshCw, Moon, Star, Gift } from "lucide-react";
 
-interface SalamiWheelAppProps {
-  initialGiverName: string | null;
-  initialMaxAmount: number | null;
-}
-
+/**
+ * Generates a dynamic 12-segment distribution array based on the maximum amount.
+ * @param maxAmount - The highest possible salami amount set by the giver.
+ * @returns An array of 12 integers representing the wheel slices.
+ */
 const generateWheelSegments = (maxAmount: number): number[] => {
   return [
     maxAmount,
@@ -26,12 +27,41 @@ const generateWheelSegments = (maxAmount: number): number[] => {
   ];
 };
 
-const SalamiWheelApp = ({
-  initialGiverName,
-  initialMaxAmount,
-}: SalamiWheelAppProps) => {
-  const isReceiverMode = initialGiverName !== null && initialMaxAmount !== null;
+/**
+ * Main Client Component: Highly-themed Eid al-Fitr Salami Wheel
+ * Utilizes Derived State to parse URL parameters safely without cascading renders.
+ */
+const SalamiWheelApp = () => {
+  // --- ROUTING & DERIVED STATE ---
+  const searchParams = useSearchParams();
+  const tokenParam = searchParams.get("token");
 
+  let initialGiverName: string | null = null;
+  let initialMaxAmount: number | null = null;
+
+  // Derive data directly from the URL parameter on render, avoiding useEffect
+  if (tokenParam) {
+    try {
+      const decodedStr = decodeURIComponent(atob(tokenParam));
+      const parsedData = JSON.parse(decodedStr);
+
+      if (parsedData.g && parsedData.m) {
+        initialGiverName = parsedData.g;
+        initialMaxAmount = parseInt(parsedData.m, 10);
+      }
+    } catch (error) {
+      console.error("Invalid or corrupted token provided in URL.");
+    }
+  }
+
+  const isReceiverMode = initialGiverName !== null && initialMaxAmount !== null;
+  const wheelSegments = initialMaxAmount
+    ? generateWheelSegments(initialMaxAmount)
+    : [];
+  const totalSegments = wheelSegments.length;
+  const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
+
+  // --- COMPONENT STATE ---
   const [giverInputName, setGiverInputName] = useState<string>("");
   const [maxAmountInput, setMaxAmountInput] = useState<string>("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -44,27 +74,19 @@ const SalamiWheelApp = ({
 
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const wheelSegments = initialMaxAmount
-    ? generateWheelSegments(initialMaxAmount)
-    : [];
-  const totalSegments = wheelSegments.length;
-  const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
-
   // --- LOGIC: GIVER ---
   const handleGenerateLink = (e: React.FormEvent) => {
     e.preventDefault();
     if (!giverInputName.trim() || !maxAmountInput) return;
 
     const baseUrl = window.location.origin;
-
-    // Create a minified JSON object and encode it to Base64 to hide the values
     const payload = JSON.stringify({
       g: giverInputName.trim(),
       m: maxAmountInput,
     });
 
-    // btoa() safely encodes a string to Base64 in the browser
-    const secretToken = btoa(payload);
+    // Unicode-safe Base64 encoding
+    const secretToken = btoa(encodeURIComponent(payload));
     const params = new URLSearchParams({ token: secretToken });
 
     setGeneratedLink(`${baseUrl}?${params.toString()}`);
@@ -269,7 +291,7 @@ const SalamiWheelApp = ({
                   >
                     {wheelSegments.map((amount, index) => {
                       const rotation = index * segmentAngle;
-                      const color = index % 2 === 0 ? "#064e3b" : "#047857"; // Deep emerald greens
+                      const color = index % 2 === 0 ? "#064e3b" : "#047857";
                       return (
                         <div
                           key={index}
@@ -335,12 +357,10 @@ const SalamiWheelApp = ({
                   ref={cardRef}
                   className="w-full aspect-[3/4] rounded-xl relative overflow-hidden flex flex-col items-center justify-between py-12 px-6 text-center shadow-2xl border-[8px] border-slate-900 ring-2 ring-amber-500/50"
                   style={{
-                    // Rich deep background with an embedded SVG geometric pattern
                     backgroundColor: "#020617",
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbbf24' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), radial-gradient(circle at center, #0f172a 0%, #020617 100%)`,
                   }}
                 >
-                  {/* Decorative Inner Border */}
                   <div className="absolute inset-3 border border-amber-500/30 rounded-lg pointer-events-none"></div>
                   <div className="absolute inset-4 border border-amber-500/10 rounded-lg pointer-events-none"></div>
 
@@ -367,7 +387,6 @@ const SalamiWheelApp = ({
                     <p className="text-emerald-300/80 text-sm mb-3 font-medium tracking-wide z-10">
                       You have received
                     </p>
-                    {/* The Prize Box */}
                     <div className="relative z-10 bg-slate-900/80 backdrop-blur-sm border border-amber-500/30 py-6 w-full rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.15)]">
                       <div className="gold-foil-text text-7xl font-black drop-shadow-lg">
                         <span className="text-4xl align-top mr-1">৳</span>
