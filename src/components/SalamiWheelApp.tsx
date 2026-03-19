@@ -189,7 +189,7 @@ const SalamiWheelApp = ({
             <p className="text-sm font-semibold text-emerald-800 mb-2">
               Your Unique Link is Ready!
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-2">
               <input
                 type="text"
                 readOnly
@@ -199,9 +199,39 @@ const SalamiWheelApp = ({
               <button
                 onClick={handleShareLink}
                 className="bg-emerald-600 text-white p-2 rounded hover:bg-emerald-700 transition-colors flex items-center justify-center"
+                title="Share or Copy Link"
               >
                 <Share2 size={20} />
               </button>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(generatedLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                title="Share on Facebook"
+              >
+                Facebook
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent("Spin for Eid Salami! " + generatedLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                title="Share on WhatsApp"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={`https://www.messenger.com/share?link=${encodeURIComponent(generatedLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                title="Share on Messenger"
+              >
+                Messenger
+              </a>
             </div>
           </div>
         )}

@@ -2,19 +2,23 @@ import SalamiWheelApp from "../components/SalamiWheelApp";
 
 /**
  * Props for the Next.js Page component
+ * Updated for Next.js 15: searchParams is now a Promise
  */
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /**
  * Main Page Server Component
- * Responsible for extracting URL parameters and passing them to the interactive client app.
+ * Responsible for extracting URL parameters asynchronously and passing them to the interactive client app.
  */
-const HomePage = ({ searchParams }: PageProps) => {
+const HomePage = async ({ searchParams }: PageProps) => {
+  // Await the searchParams Promise to access the actual URL data
+  const resolvedParams = await searchParams;
+
   // Extract giver configuration from URL parameters
-  const giverNameParam = searchParams.giver;
-  const maxAmountParam = searchParams.max;
+  const giverNameParam = resolvedParams.giver;
+  const maxAmountParam = resolvedParams.max;
 
   const giverName = typeof giverNameParam === "string" ? giverNameParam : null;
   const maxAmount =
