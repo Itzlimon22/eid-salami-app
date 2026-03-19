@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { toPng } from "html-to-image";
-import { Share2, Download, RefreshCw, Moon, Star, Gift } from "lucide-react";
+import { Share2, Moon, Star, Gift, X, Trash2, RefreshCw } from "lucide-react";
 
 /**
- * Generates a dynamic 12-segment distribution array based on the maximum amount.
- * @param maxAmount - The highest possible salami amount set by the giver.
- * @returns An array of 12 integers representing the wheel slices.
+ * Generates the initial 12-segment distribution array based on the maximum amount.
  */
 const generateWheelSegments = (maxAmount: number): number[] => {
   return [
@@ -27,41 +24,34 @@ const generateWheelSegments = (maxAmount: number): number[] => {
   ];
 };
 
-/**
- * Main Client Component: Highly-themed Eid al-Fitr Salami Wheel
- * Utilizes Derived State to parse URL parameters safely without cascading renders.
- */
 const SalamiWheelApp = () => {
   // --- ROUTING & DERIVED STATE ---
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get("token");
 
-  let initialGiverName: string | null = null;
-  let initialMaxAmount: number | null = null;
+  let derivedGiverName: string | null = null;
+  let derivedMaxAmount: number | null = null;
 
-  // Derive data directly from the URL parameter on render, avoiding useEffect
   if (tokenParam) {
     try {
       const decodedStr = decodeURIComponent(atob(tokenParam));
       const parsedData = JSON.parse(decodedStr);
 
       if (parsedData.g && parsedData.m) {
-        initialGiverName = parsedData.g;
-        initialMaxAmount = parseInt(parsedData.m, 10);
+        derivedGiverName = parsedData.g;
+        derivedMaxAmount = parseInt(parsedData.m, 10);
       }
     } catch (error) {
       console.error("Invalid or corrupted token provided in URL.");
     }
   }
 
-  const isReceiverMode = initialGiverName !== null && initialMaxAmount !== null;
-  const wheelSegments = initialMaxAmount
-    ? generateWheelSegments(initialMaxAmount)
-    : [];
-  const totalSegments = wheelSegments.length;
-  const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
+  const isReceiverMode = derivedGiverName !== null && derivedMaxAmount !== null;
 
-  // --- COMPONENT STATE ---
+  // --- MUTABLE COMPONENT STATE ---
+  // We store the wheel segments in state so we can remove them later
+  const [activeSegments, setActiveSegments] = useState<number[]>([]);
+
   const [giverInputName, setGiverInputName] = useState<string>("");
   const [maxAmountInput, setMaxAmountInput] = useState<string>("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -69,10 +59,22 @@ const SalamiWheelApp = () => {
   const [receiverName, setReceiverName] = useState<string>("");
   const [isWheelSpinning, setIsWheelSpinning] = useState<boolean>(false);
   const [wheelRotationDegree, setWheelRotationDegree] = useState<number>(0);
-  const [winningAmount, setWinningAmount] = useState<number | null>(null);
-  const [hasSpun, setHasSpun] = useState<boolean>(false);
 
-  const cardRef = useRef<HTMLDivElement>(null);
+  // Modal & Winning State
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [winningAmount, setWinningAmount] = useState<number | null>(null);
+  const [winningIndex, setWinningIndex] = useState<number | null>(null);
+
+  // Initialize segments once when the URL is decoded
+  useEffect(() => {
+    if (derivedMaxAmount && activeSegments.length === 0) {
+      setActiveSegments(generateWheelSegments(derivedMaxAmount));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedMaxAmount]);
+
+  const totalSegments = activeSegments.length;
+  const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
 
   // --- LOGIC: GIVER ---
   const handleGenerateLink = (e: React.FormEvent) => {
@@ -84,8 +86,6 @@ const SalamiWheelApp = () => {
       g: giverInputName.trim(),
       m: maxAmountInput,
     });
-
-    // Unicode-safe Base64 encoding
     const secretToken = btoa(encodeURIComponent(payload));
     const params = new URLSearchParams({ token: secretToken });
 
@@ -112,46 +112,58 @@ const SalamiWheelApp = () => {
 
   // --- LOGIC: RECEIVER ---
   const handleSpinWheel = () => {
-    if (
-      !receiverName.trim() ||
-      isWheelSpinning ||
-      hasSpun ||
-      totalSegments === 0
-    )
-      return;
+    if (!receiverName.trim() || isWheelSpinning || totalSegments === 0) return;
 
     setIsWheelSpinning(true);
-    const randomSegmentIndex = Math.floor(Math.random() * totalSegments);
+
+    // Pick a random winner
+    const randomIdx = Math.floor(Math.random() * totalSegments);
     const extraDegrees = 360 * 6;
-    const landingAngle =
-      360 - (randomSegmentIndex * segmentAngle + segmentAngle / 2);
+
+    // Calculate exact landing angle for the pointer
+    const landingAngle = 360 - (randomIdx * segmentAngle + segmentAngle / 2);
     const totalRotation = extraDegrees + landingAngle;
 
     setWheelRotationDegree((prev) => prev + totalRotation);
 
+    // Wait for CSS animation to finish
     setTimeout(() => {
       setIsWheelSpinning(false);
-      setWinningAmount(wheelSegments[randomSegmentIndex]);
-      setHasSpun(true);
+      setWinningAmount(activeSegments[randomIdx]);
+      setWinningIndex(randomIdx);
+      setShowModal(true); // Trigger the pop-up modal
     }, 4000);
   };
 
-  const handleDownloadCard = async () => {
-    if (!cardRef.current) return;
-    try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        quality: 1.0,
-        pixelRatio: 3,
-      });
-      const link = document.createElement("a");
-      link.download = `Eid-Salami-${receiverName.replace(/\s+/g, "-")}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      alert("Could not download image. Please try again.");
-    }
+  // Modal Actions
+  const handleCloseModal = () => {
+    setShowModal(false);
+    // Reset wheel visually for the next spin without removing the amount
+    setWheelRotationDegree(0);
   };
+
+  const handleRemoveAmount = () => {
+    if (winningIndex !== null) {
+      // Filter out the specific index that was won
+      setActiveSegments((prev) => prev.filter((_, i) => i !== winningIndex));
+    }
+    setShowModal(false);
+    setWheelRotationDegree(0);
+  };
+
+  // --- DYNAMIC CSS GENERATION ---
+  // This builds the conic-gradient string based on whatever segments are left
+  const wheelBackground =
+    activeSegments.length > 0
+      ? `conic-gradient(${activeSegments
+          .map((_, i) => {
+            const start = i * segmentAngle;
+            const end = (i + 1) * segmentAngle;
+            const color = i % 2 === 0 ? "#064e3b" : "#047857"; // Alternating Emerald colors
+            return `${color} ${start}deg ${end}deg`;
+          })
+          .join(", ")})`
+      : "#0f172a"; // Fallback if empty
 
   // --- UI RENDERING ---
   return (
@@ -256,177 +268,146 @@ const SalamiWheelApp = () => {
         ) : (
           /* VIEW 2: RECEIVER SPIN MODE */
           <div className="max-w-md w-full flex flex-col items-center">
-            {!hasSpun ? (
-              <div className="w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden">
-                <Star className="absolute top-6 right-6 text-amber-400/20 w-8 h-8" />
-                <h1 className="text-3xl font-bold text-center text-amber-400 mb-2 z-10 font-eid">
-                  Surprise from {initialGiverName}!
-                </h1>
-                <p className="text-center text-slate-400 mb-8 z-10 text-sm">
-                  Enter your name to see what you get 🌙
-                </p>
+            {/* The Main Wheel Interface */}
+            <div
+              className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
+            >
+              <Star className="absolute top-6 right-6 text-amber-400/20 w-8 h-8" />
+              <h1 className="text-3xl font-bold text-center text-amber-400 mb-2 z-10 font-eid">
+                Surprise from {derivedGiverName}!
+              </h1>
+              <p className="text-center text-slate-400 mb-8 z-10 text-sm">
+                Enter your name to see what you get 🌙
+              </p>
 
-                {!isWheelSpinning && receiverName === "" && (
-                  <div className="w-full mb-8 z-10">
-                    <input
-                      type="text"
-                      maxLength={25}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-lg text-white"
-                      placeholder="Enter your name..."
-                      value={receiverName}
-                      onChange={(e) => setReceiverName(e.target.value)}
-                    />
-                  </div>
-                )}
+              <div className="w-full mb-8 z-10">
+                <input
+                  type="text"
+                  maxLength={25}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-lg text-white disabled:opacity-50"
+                  placeholder="Enter your name..."
+                  value={receiverName}
+                  onChange={(e) => setReceiverName(e.target.value)}
+                  disabled={isWheelSpinning || activeSegments.length === 0}
+                />
+              </div>
 
-                <div className="relative w-72 h-72 mb-8 z-10">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[24px] border-l-transparent border-r-transparent border-t-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+              {/* Dynamic Conic Gradient Wheel */}
+              <div className="relative w-72 h-72 mb-8 z-10">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[24px] border-l-transparent border-r-transparent border-t-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+
+                {activeSegments.length > 0 ? (
                   <div
-                    className="w-full h-full rounded-full border-[6px] border-slate-800 overflow-hidden relative shadow-[0_0_40px_rgba(16,185,129,0.2)] bg-slate-900"
+                    className="w-full h-full rounded-full border-[6px] border-slate-800 overflow-hidden relative shadow-[0_0_40px_rgba(16,185,129,0.2)]"
                     style={{
+                      background: wheelBackground,
                       transition:
                         "transform 4s cubic-bezier(0.12, 0.8, 0.15, 1)",
                       transform: `rotate(${wheelRotationDegree}deg)`,
                     }}
                   >
-                    {wheelSegments.map((amount, index) => {
-                      const rotation = index * segmentAngle;
-                      const color = index % 2 === 0 ? "#064e3b" : "#047857";
+                    {activeSegments.map((amount, index) => {
+                      // Position text exactly in the middle of each segment
+                      const rotation = index * segmentAngle + segmentAngle / 2;
                       return (
                         <div
-                          key={index}
-                          className="absolute top-0 left-0 w-full h-full"
-                          style={{
-                            clipPath:
-                              "polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 50% 50%)",
-                            transform: `rotate(${rotation}deg)`,
-                            transformOrigin: "50% 50%",
-                          }}
+                          key={`${index}-${amount}`}
+                          className="absolute top-0 left-1/2 w-8 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-6 z-10"
+                          style={{ transform: `rotate(${rotation}deg)` }}
                         >
-                          <div
-                            className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left"
+                          <span
+                            className="text-amber-400 font-bold text-sm tracking-tighter drop-shadow-md"
                             style={{
-                              backgroundColor: color,
-                              transform: `skewY(${90 - segmentAngle}deg)`,
-                            }}
-                          />
-                          <div
-                            className="absolute top-0 left-1/2 w-8 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-6 z-10"
-                            style={{
-                              transform: `rotate(${segmentAngle / 2}deg)`,
+                              writingMode: "vertical-rl",
+                              transform: "rotate(180deg)",
                             }}
                           >
-                            <span
-                              className="text-amber-400 font-bold text-sm tracking-tighter drop-shadow-md"
-                              style={{
-                                writingMode: "vertical-rl",
-                                transform: "rotate(180deg)",
-                              }}
-                            >
-                              ৳{amount}
-                            </span>
-                          </div>
+                            ৳{amount}
+                          </span>
                         </div>
                       );
                     })}
+                    {/* Center Pin */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-amber-400 rounded-full border-4 border-slate-900 z-20 shadow-xl"></div>
                   </div>
-                </div>
-
-                <button
-                  onClick={handleSpinWheel}
-                  disabled={!receiverName.trim() || isWheelSpinning}
-                  className={`w-full font-bold py-3.5 rounded-lg transition-all text-white z-10 ${!receiverName.trim() || isWheelSpinning ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
-                >
-                  {isWheelSpinning ? "SPINNING..." : "SPIN FOR SALAMI"}
-                </button>
-
-                {!isWheelSpinning && (
-                  <button
-                    onClick={() => (window.location.href = "/")}
-                    className="mt-6 text-sm text-emerald-400 hover:text-emerald-300 underline underline-offset-4 z-10"
-                  >
-                    Want to create your own Salami Wheel?
-                  </button>
+                ) : (
+                  // Empty State if all segments are removed
+                  <div className="w-full h-full rounded-full border-[6px] border-slate-800 bg-slate-900 flex items-center justify-center text-slate-500 font-bold">
+                    WHEEL EMPTY
+                  </div>
                 )}
               </div>
-            ) : (
-              /* --- PREMIUM EID CARD VIEW --- */
-              <div className="w-full flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-700">
-                <div
-                  ref={cardRef}
-                  className="w-full aspect-[3/4] rounded-xl relative overflow-hidden flex flex-col items-center justify-between py-12 px-6 text-center shadow-2xl border-[8px] border-slate-900 ring-2 ring-amber-500/50"
-                  style={{
-                    backgroundColor: "#020617",
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbbf24' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), radial-gradient(circle at center, #0f172a 0%, #020617 100%)`,
-                  }}
-                >
-                  <div className="absolute inset-3 border border-amber-500/30 rounded-lg pointer-events-none"></div>
-                  <div className="absolute inset-4 border border-amber-500/10 rounded-lg pointer-events-none"></div>
 
-                  <div className="z-10 flex flex-col items-center w-full mt-2">
-                    <Moon
-                      className="text-amber-400 w-10 h-10 mb-4 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
-                      fill="currentColor"
-                    />
-                    <h2 className="gold-foil-text font-eid text-5xl mb-2 font-bold tracking-widest uppercase">
-                      Eid Mubarak
-                    </h2>
-                    <div className="w-32 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent mb-8"></div>
+              <button
+                onClick={handleSpinWheel}
+                disabled={
+                  !receiverName.trim() ||
+                  isWheelSpinning ||
+                  activeSegments.length === 0
+                }
+                className={`w-full font-bold py-3.5 rounded-lg transition-all text-white z-10 ${!receiverName.trim() || isWheelSpinning || activeSegments.length === 0 ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
+              >
+                {isWheelSpinning
+                  ? "SPINNING..."
+                  : activeSegments.length === 0
+                    ? "NO MORE SALAMI"
+                    : "SPIN FOR SALAMI"}
+              </button>
 
-                    <p className="text-amber-200/60 text-xs mb-2 uppercase tracking-[0.3em]">
-                      Presented To
-                    </p>
-                    <p className="text-slate-100 text-3xl font-bold w-full break-words whitespace-normal px-4 line-clamp-2 leading-tight">
-                      {receiverName}
-                    </p>
-                  </div>
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="w-full mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Gift size={18} className="text-amber-400" />
+                Create Your Own Salami Link
+              </button>
+            </div>
 
-                  <div className="z-10 flex flex-col items-center w-full relative my-6">
-                    <div className="absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full"></div>
-                    <p className="text-emerald-300/80 text-sm mb-3 font-medium tracking-wide z-10">
-                      You have received
+            {/* --- RESULT POP-UP MODAL --- */}
+            {showModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="w-full max-w-sm bg-slate-900 rounded-2xl border-2 border-amber-500/50 shadow-[0_0_50px_rgba(251,191,36,0.15)] p-6 relative flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                  {/* Decorative Header */}
+                  <Moon
+                    className="text-amber-400 w-12 h-12 mb-3 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+                    fill="currentColor"
+                  />
+                  <h2 className="gold-foil-text font-eid text-4xl mb-1 font-bold tracking-wider">
+                    Congratulations!
+                  </h2>
+                  <p className="text-slate-200 text-lg font-bold mb-4 w-full break-words">
+                    {receiverName}
+                  </p>
+
+                  {/* Prize Display */}
+                  <div className="w-full bg-slate-950 rounded-xl border border-emerald-500/30 py-6 mb-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-emerald-500/10 blur-xl"></div>
+                    <p className="text-emerald-400/80 text-xs font-medium uppercase tracking-widest mb-1 relative z-10">
+                      You won
                     </p>
-                    <div className="relative z-10 bg-slate-900/80 backdrop-blur-sm border border-amber-500/30 py-6 w-full rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.15)]">
-                      <div className="gold-foil-text text-7xl font-black drop-shadow-lg">
-                        <span className="text-4xl align-top mr-1">৳</span>
-                        {winningAmount}
-                      </div>
+                    <div className="gold-foil-text text-6xl font-black relative z-10 drop-shadow-md">
+                      <span className="text-3xl align-top mr-1">৳</span>
+                      {winningAmount}
                     </div>
                   </div>
 
-                  <div className="z-10 mt-auto mb-2">
-                    <p className="text-amber-200/60 text-sm italic font-serif">
-                      Sent with love from
-                    </p>
-                    <p className="gold-foil-text font-bold mt-1 text-xl">
-                      {initialGiverName}
-                    </p>
+                  {/* Action Buttons */}
+                  <div className="w-full flex flex-col gap-3">
+                    <button
+                      onClick={handleCloseModal}
+                      className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw size={18} /> Keep Amount & Spin Again
+                    </button>
+
+                    <button
+                      onClick={handleRemoveAmount}
+                      className="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/50 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={18} /> Remove Amount & Close
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex w-full gap-3 mt-2">
-                  <button
-                    onClick={handleDownloadCard}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <Download size={20} /> Save Premium Card
-                  </button>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="flex-none bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 font-bold py-3.5 px-4 rounded-lg transition-all flex items-center justify-center"
-                  >
-                    <RefreshCw size={20} />
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => (window.location.href = "/")}
-                  className="w-full mt-1 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <Gift size={18} className="text-amber-400" />
-                  Create Your Own Salami Link
-                </button>
               </div>
             )}
           </div>
