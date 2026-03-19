@@ -4,23 +4,20 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
-/**
- * Generates 16 dynamic wheel segments with realistic Eid fractions (.25, .50, .75).
- */
 const generateWheelSegments = (maxAmount: number): number[] => {
   return [
-    maxAmount, // The Jackpot!
+    maxAmount,
     Math.floor(maxAmount * 0.1) + 0.25,
     Math.floor(maxAmount * 0.4) + 0.5,
-    10, // Minimum base
+    10,
     Math.floor(maxAmount * 0.25) + 0.75,
-    0, // The dreaded zero!
+    0,
     Math.floor(maxAmount * 0.6) + 0.25,
     Math.floor(maxAmount * 0.15) + 0.5,
     Math.floor(maxAmount * 0.8) + 0.75,
     20.5,
     Math.floor(maxAmount * 0.35) + 0.25,
-    0, // Another zero for tension
+    0,
     Math.floor(maxAmount * 0.7) + 0.5,
     Math.floor(maxAmount * 0.05) + 0.75,
     Math.floor(maxAmount * 0.9) + 0.25,
@@ -28,20 +25,7 @@ const generateWheelSegments = (maxAmount: number): number[] => {
   ];
 };
 
-/**
- * Determines the contextual emoji based on the won amount vs the maximum amount.
- */
-const getEmojiForAmount = (amount: number, maxAmount: number): string => {
-  if (amount === 0) return "😭";
-  if (amount === maxAmount) return "🤑🥳";
-  if (amount < maxAmount * 0.1) return "🥲";
-  if (amount < maxAmount * 0.4) return "😊";
-  return "😍🎉";
-};
-
 const SalamiWheelApp = () => {
-  // --- ROUTING & DERIVED STATE ---
-  // We use '?d=' instead of '?token=' to shorten the URL as much as possible statically
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get("d");
 
@@ -58,15 +42,13 @@ const SalamiWheelApp = () => {
         derivedMaxAmount = parseFloat(parsedData.m);
       }
     } catch (error) {
-      console.error("ইউআরএল টোকেন সঠিক নয় (Invalid Token).");
+      console.error("Invalid Token");
     }
   }
 
   const isReceiverMode = derivedGiverName !== null && derivedMaxAmount !== null;
 
-  // --- MUTABLE COMPONENT STATE ---
   const [activeSegments, setActiveSegments] = useState<number[]>([]);
-
   const [giverInputName, setGiverInputName] = useState<string>("");
   const [maxAmountInput, setMaxAmountInput] = useState<string>("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -75,7 +57,6 @@ const SalamiWheelApp = () => {
   const [isWheelSpinning, setIsWheelSpinning] = useState<boolean>(false);
   const [wheelRotationDegree, setWheelRotationDegree] = useState<number>(0);
 
-  // Modal & Winning State
   const [showModal, setShowModal] = useState<boolean>(false);
   const [winningAmount, setWinningAmount] = useState<number | null>(null);
   const [winningIndex, setWinningIndex] = useState<number | null>(null);
@@ -90,7 +71,6 @@ const SalamiWheelApp = () => {
   const totalSegments = activeSegments.length;
   const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
 
-  // --- LOGIC: GIVER ---
   const handleGenerateLink = (e: React.FormEvent) => {
     e.preventDefault();
     if (!giverInputName.trim() || !maxAmountInput) return;
@@ -101,7 +81,6 @@ const SalamiWheelApp = () => {
       m: maxAmountInput,
     });
     const secretToken = btoa(encodeURIComponent(payload));
-    // Optimized URL parameter name 'd' for Data
     const params = new URLSearchParams({ d: secretToken });
 
     setGeneratedLink(`${baseUrl}?${params.toString()}`);
@@ -125,33 +104,35 @@ const SalamiWheelApp = () => {
     alert("ম্যাজিক লিংক কপি হয়েছে! মেসেঞ্জার বা হোয়াটসঅ্যাপে শেয়ার করো।");
   };
 
-  // --- LOGIC: RECEIVER ---
   const handleSpinWheel = () => {
     if (!receiverName.trim() || isWheelSpinning || totalSegments === 0) return;
 
     setIsWheelSpinning(true);
 
     const randomIdx = Math.floor(Math.random() * totalSegments);
-    // Increased Extra Spins for suspense (12 full rotations)
-    const extraDegrees = 360 * 12;
-
     const landingAngle = 360 - (randomIdx * segmentAngle + segmentAngle / 2);
-    const totalRotation = extraDegrees + landingAngle;
 
-    setWheelRotationDegree((prev) => prev + totalRotation);
+    // --- BUG FIX: Absolute Rotation Math ---
+    // Calculate how many full 360-degree spins we have ALREADY done
+    const currentRotations = Math.floor(wheelRotationDegree / 360);
+    // Add 15 new extra spins for the 10-second duration
+    const targetRotation = (currentRotations + 15) * 360 + landingAngle;
 
-    // Increased Timeout to match the longer spin duration (7 seconds)
+    setWheelRotationDegree(targetRotation);
+
+    // Wait 10 seconds for the new CSS transition to finish
     setTimeout(() => {
       setIsWheelSpinning(false);
       setWinningAmount(activeSegments[randomIdx]);
       setWinningIndex(randomIdx);
       setShowModal(true);
-    }, 7000);
+    }, 10000);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setWheelRotationDegree(0);
+    // BUG FIX: Intentionally NOT resetting setWheelRotationDegree(0) here
+    // so it doesn't spin backwards!
   };
 
   const handleRemoveAmount = () => {
@@ -159,22 +140,23 @@ const SalamiWheelApp = () => {
       setActiveSegments((prev) => prev.filter((_, i) => i !== winningIndex));
     }
     setShowModal(false);
-    setWheelRotationDegree(0);
+    // BUG FIX: No rotation reset here either.
   };
 
+  // Upgraded Realistic Wheel Colors (Emerald, Bronze, Midnight)
+  const themeColors = ["#064e3b", "#92400e", "#020617", "#166534"];
   const wheelBackground =
     activeSegments.length > 0
       ? `conic-gradient(${activeSegments
           .map((_, i) => {
             const start = i * segmentAngle;
             const end = (i + 1) * segmentAngle;
-            const color = i % 2 === 0 ? "#064e3b" : "#047857";
+            const color = themeColors[i % themeColors.length];
             return `${color} ${start}deg ${end}deg`;
           })
           .join(", ")})`
       : "#0f172a";
 
-  // --- UI RENDERING ---
   return (
     <>
       <style
@@ -182,7 +164,6 @@ const SalamiWheelApp = () => {
           __html: `
         @import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;600;800&family=Aref+Ruqaa:wght@700&display=swap');
         
-        /* Bengali font primary, Arabic font for Eid headers */
         body { font-family: 'Anek Bangla', sans-serif; }
         .font-eid { font-family: 'Aref Ruqaa', serif; }
         
@@ -193,7 +174,10 @@ const SalamiWheelApp = () => {
           color: transparent;
         }
 
-        /* Flower Rain Particle System Engine */
+        .realistic-text-shadow {
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9), 0px 0px 2px rgba(0, 0, 0, 1);
+        }
+
         @keyframes flower-fall {
           0% { transform: translateY(-10vh) rotate(0deg) scale(0.5); opacity: 1; }
           100% { transform: translateY(110vh) rotate(360deg) scale(1.2); opacity: 0; }
@@ -216,7 +200,6 @@ const SalamiWheelApp = () => {
             "radial-gradient(circle at top right, #0f172a, #020617)",
         }}
       >
-        {/* VIEW 1: GIVER CREATE MODE */}
         {!isReceiverMode ? (
           <div className="max-w-md w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 relative overflow-hidden">
             <Moon className="absolute -top-6 -right-6 text-amber-500/10 w-32 h-32" />
@@ -293,7 +276,6 @@ const SalamiWheelApp = () => {
             )}
           </div>
         ) : (
-          /* VIEW 2: RECEIVER SPIN MODE */
           <div className="max-w-md w-full flex flex-col items-center">
             <div
               className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
@@ -318,19 +300,18 @@ const SalamiWheelApp = () => {
                 />
               </div>
 
-              {/* Dynamic Conic Gradient Wheel */}
               <div className="relative w-72 h-72 mb-8 z-10">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[24px] border-l-transparent border-r-transparent border-t-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[14px] border-r-[14px] border-t-[28px] border-l-transparent border-r-transparent border-t-amber-400 drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" />
 
                 {activeSegments.length > 0 ? (
                   <>
                     <div
-                      className="w-full h-full rounded-full border-[6px] border-slate-800 overflow-hidden relative shadow-[0_0_40px_rgba(16,185,129,0.2)]"
+                      className="w-full h-full rounded-full border-[8px] border-slate-800 overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.8),0_0_40px_rgba(16,185,129,0.2)]"
                       style={{
                         background: wheelBackground,
-                        // Smooth easing out for 7 seconds to build tension
+                        // Increased to 10 seconds with a realistic ease-out curve
                         transition:
-                          "transform 7s cubic-bezier(0.1, 0.8, 0.1, 1)",
+                          "transform 10s cubic-bezier(0.1, 0.85, 0.1, 1)",
                         transform: `rotate(${wheelRotationDegree}deg)`,
                       }}
                     >
@@ -340,11 +321,11 @@ const SalamiWheelApp = () => {
                         return (
                           <div
                             key={`${index}-${amount}`}
-                            className="absolute top-0 left-1/2 w-8 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-5 z-10"
+                            className="absolute top-0 left-1/2 w-8 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-4 z-10"
                             style={{ transform: `rotate(${rotation}deg)` }}
                           >
                             <span
-                              className="text-amber-400 font-bold text-xs tracking-tighter drop-shadow-md"
+                              className="text-slate-100 font-bold text-[13px] tracking-widest realistic-text-shadow"
                               style={{
                                 writingMode: "vertical-rl",
                                 transform: "rotate(180deg)",
@@ -356,7 +337,6 @@ const SalamiWheelApp = () => {
                         );
                       })}
                     </div>
-                    {/* Clickable Center Pin to trigger spin */}
                     <button
                       onClick={handleSpinWheel}
                       disabled={
@@ -364,13 +344,13 @@ const SalamiWheelApp = () => {
                         isWheelSpinning ||
                         activeSegments.length === 0
                       }
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full border-4 border-slate-900 z-30 shadow-[0_0_20px_rgba(251,191,36,0.6)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 rounded-full border-[5px] border-slate-900 z-30 shadow-[0_4px_15px_rgba(0,0,0,0.8)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       স্পিন
                     </button>
                   </>
                 ) : (
-                  <div className="w-full h-full rounded-full border-[6px] border-slate-800 bg-slate-900 flex items-center justify-center text-slate-500 font-bold text-lg">
+                  <div className="w-full h-full rounded-full border-[8px] border-slate-800 bg-slate-900 flex items-center justify-center text-slate-500 font-bold text-lg shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
                     সেলামি শেষ!
                   </div>
                 )}
@@ -401,10 +381,8 @@ const SalamiWheelApp = () => {
               </button>
             </div>
 
-            {/* --- RESULT POP-UP MODAL WITH FLOWER RAIN --- */}
             {showModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-                {/* Custom CSS Flower Rain Injection */}
                 {winningAmount !== null &&
                   Array.from({ length: 30 }).map((_, i) => {
                     const flowers = ["🌸", "🌺", "🌼", "✨", "🌙"];
@@ -448,11 +426,6 @@ const SalamiWheelApp = () => {
                     <div className="gold-foil-text text-5xl font-black relative z-10 drop-shadow-md flex items-center justify-center gap-2">
                       <span className="text-3xl align-top">৳</span>
                       {winningAmount}
-                      <span className="text-4xl">
-                        {winningAmount !== null && derivedMaxAmount !== null
-                          ? getEmojiForAmount(winningAmount, derivedMaxAmount)
-                          : ""}
-                      </span>
                     </div>
                   </div>
 
