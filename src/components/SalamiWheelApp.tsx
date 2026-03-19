@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 // Sound effect URLs (replace with your own or royalty-free links if needed)
-const SPIN_SOUND_URL = "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae3e2.mp3"; // Example spin sound
-const CONGRATS_SOUND_URL = "https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b7bfa.mp3"; // Example congrats sound
+const SPIN_SOUND_URL =
+  "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae3e2.mp3"; // Example spin sound
+const CONGRATS_SOUND_URL =
+  "https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b7bfa.mp3"; // Example congrats sound
 import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
@@ -230,20 +232,22 @@ const SalamiWheelApp = () => {
       />
 
       <div
-        className="min-h-screen w-full bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden"
+        className="min-h-screen w-full bg-slate-950 flex items-center justify-center p-2 sm:p-4 relative overflow-hidden"
         style={{
           backgroundImage:
             "radial-gradient(circle at top right, #0f172a, #020617)",
         }}
       >
         {!isReceiverMode ? (
-          <div className="max-w-md w-full bg-slate-900 rounded-2xl shadow-2xl p-4 sm:p-8 border border-slate-700 relative overflow-hidden">
+          <div className="max-w-sm w-full bg-slate-900 rounded-2xl shadow-2xl p-2 sm:p-8 border border-slate-700 relative overflow-hidden">
             <Moon className="absolute -top-6 -right-6 text-white/10 w-32 h-32" />
             <h1 className="text-2xl sm:text-4xl font-bold text-center text-white mb-2 relative z-10 font-eid tracking-wide">
-              সেলামি Wheel
+              <span className="text-3xl sm:text-4xl">সেলামি Wheel</span>
             </h1>
             <p className="text-center text-slate-400 mb-6 sm:mb-8 text-xs sm:text-sm relative z-10 leading-relaxed">
-              তোমার Highest Amount ঠিক করো।
+              <span className="text-base sm:text-sm">
+                তোমার Highest Amount ঠিক করো।
+              </span>
             </p>
 
             <form
@@ -258,7 +262,7 @@ const SalamiWheelApp = () => {
                   type="text"
                   required
                   maxLength={25}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-sm sm:text-base"
+                  className="w-full px-4 py-3 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-base sm:text-base"
                   placeholder="যেমন: Kuddus Bhai"
                   value={giverInputName}
                   onChange={(e) => setGiverInputName(e.target.value)}
@@ -273,7 +277,7 @@ const SalamiWheelApp = () => {
                   required
                   min="1"
                   max="100000"
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-sm sm:text-base"
+                  className="w-full px-4 py-3 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-base sm:text-base"
                   placeholder="যেমন : 500"
                   value={maxAmountInput}
                   onChange={(e) => setMaxAmountInput(e.target.value)}
@@ -281,7 +285,7 @@ const SalamiWheelApp = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-white to-slate-100 hover:from-white/80 hover:to-slate-100/80 text-slate-900 font-bold py-2.5 sm:py-3.5 rounded-lg transition-all shadow-lg shadow-white/20 text-base sm:text-lg"
+                className="w-full bg-gradient-to-r from-white to-slate-100 hover:from-white/80 hover:to-slate-100/80 text-slate-900 font-bold py-3.5 sm:py-4 rounded-lg transition-all shadow-lg shadow-white/20 text-lg sm:text-xl"
               >
                 লিংক তৈরি করো
               </button>
@@ -313,21 +317,25 @@ const SalamiWheelApp = () => {
         ) : (
           <div className="max-w-md w-full flex flex-col items-center px-1 sm:px-0">
             <div
-              className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-4 sm:p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
+              className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-2 sm:p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
             >
               <Star className="absolute top-6 right-6 text-white/20 w-8 h-8" />
               <h1 className="text-xl sm:text-3xl font-bold text-center text-white mb-2 z-10 font-eid">
-                সারপ্রাইজ ফ্রম {derivedGiverName}!
+                <span className="text-2xl sm:text-3xl">
+                  সারপ্রাইজ ফ্রম {derivedGiverName}!
+                </span>
               </h1>
               <p className="text-center text-slate-400 mb-6 sm:mb-8 z-10 text-xs sm:text-sm">
-                তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
+                <span className="text-base sm:text-sm">
+                  তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
+                </span>
               </p>
 
               <div className="w-full mb-6 sm:mb-8 z-10">
                 <input
                   type="text"
                   maxLength={25}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-base sm:text-xl font-bold text-white disabled:opacity-50"
+                  className="w-full px-4 py-3 sm:px-4 sm:py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-lg sm:text-xl font-bold text-white disabled:opacity-50"
                   placeholder="তোমার নাম লেখো..."
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
@@ -336,12 +344,12 @@ const SalamiWheelApp = () => {
               </div>
 
               <div className="relative w-56 h-56 sm:w-72 sm:h-72 mb-6 sm:mb-8 z-10">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[14px] border-r-[14px] border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_4px_6px_rgba(255,255,255,0.8)]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[18px] border-r-[18px] border-t-[36px] sm:border-l-[14px] sm:border-r-[14px] sm:border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_4px_6px_rgba(255,255,255,0.8)]" />
 
                 {activeSegments.length > 0 ? (
                   <>
                     <div
-                      className="w-full h-full rounded-full border-[8px] border-slate-800 overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.8),0_0_40px_rgba(16,185,129,0.2)]"
+                      className="w-full h-full rounded-full border-[10px] border-slate-800 overflow-hidden relative shadow-[inset_0_0_30px_rgba(0,0,0,0.8),0_0_60px_rgba(16,185,129,0.2)]"
                       style={{
                         background: wheelBackground,
                         // Increased to 10 seconds with a realistic ease-out curve
@@ -356,11 +364,11 @@ const SalamiWheelApp = () => {
                         return (
                           <div
                             key={`${index}-${amount}`}
-                            className="absolute top-0 left-1/2 w-8 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-4 z-10"
+                            className="absolute top-0 left-1/2 w-10 h-1/2 origin-bottom -translate-x-1/2 flex items-start justify-center pt-5 z-10"
                             style={{ transform: `rotate(${rotation}deg)` }}
                           >
                             <span
-                              className="text-slate-100 font-bold text-xs sm:text-[13px] tracking-widest realistic-text-shadow"
+                              className="text-slate-100 font-bold text-sm sm:text-base tracking-widest realistic-text-shadow"
                               style={{
                                 writingMode: "vertical-rl",
                                 transform: "rotate(180deg)",
@@ -379,14 +387,14 @@ const SalamiWheelApp = () => {
                         isWheelSpinning ||
                         activeSegments.length === 0
                       }
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white to-slate-100 rounded-full border-[5px] border-slate-900 z-30 shadow-[0_4px_15px_rgba(0,0,0,0.8)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-white to-slate-100 rounded-full border-[6px] border-slate-900 z-30 shadow-[0_4px_20px_rgba(0,0,0,0.8)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       স্পিন
                     </button>
                   </>
                 ) : (
                   <div className="w-full h-full rounded-full border-[8px] border-slate-800 bg-slate-900 flex items-center justify-center text-slate-500 font-bold text-lg shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
-                    সেলামি শেষ!
+                    <span className="text-lg sm:text-xl">সেলামি শেষ!</span>
                   </div>
                 )}
               </div>
@@ -398,7 +406,7 @@ const SalamiWheelApp = () => {
                   isWheelSpinning ||
                   activeSegments.length === 0
                 }
-                className={`w-full font-bold py-2.5 sm:py-3.5 rounded-lg transition-all text-white z-10 text-base sm:text-lg ${!receiverName.trim() || isWheelSpinning || activeSegments.length === 0 ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
+                className={`w-full font-bold py-3.5 sm:py-4 rounded-lg transition-all text-white z-10 text-lg sm:text-xl ${!receiverName.trim() || isWheelSpinning || activeSegments.length === 0 ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
               >
                 {isWheelSpinning
                   ? "ঘুরছে..."
@@ -409,7 +417,7 @@ const SalamiWheelApp = () => {
 
               <button
                 onClick={() => (window.location.href = "/")}
-                className="w-full mt-3 sm:mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-semibold py-2 px-3 sm:py-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="w-full mt-3 sm:mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-semibold py-3 px-4 sm:py-4 sm:px-5 rounded-lg transition-all flex items-center justify-center gap-2 text-base sm:text-lg"
               >
                 <Gift size={18} className="text-white" />
                 নিজে তৈরি করো
@@ -443,23 +451,23 @@ const SalamiWheelApp = () => {
 
                 <div className="w-full max-w-sm bg-slate-900 rounded-2xl border-2 border-white/50 shadow-[0_0_50px_rgba(255,255,255,0.15)] p-6 relative flex flex-col items-center text-center animate-in zoom-in-95 duration-300 z-50">
                   <Moon
-                    className="text-white w-12 h-12 mb-3 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                    className="text-white w-16 h-16 mb-4 drop-shadow-[0_0_18px_rgba(255,255,255,0.5)]"
                     fill="currentColor"
                   />
-                  <h2 className="gold-foil-text font-eid text-4xl mb-1 font-bold tracking-wider">
+                  <h2 className="gold-foil-text font-eid text-5xl mb-2 font-bold tracking-wider">
                     অভিনন্দন!
                   </h2>
-                  <p className="text-slate-200 text-xl font-bold mb-4 w-full break-words">
+                  <p className="text-slate-200 text-2xl font-bold mb-5 w-full break-words">
                     {receiverName}
                   </p>
 
-                  <div className="w-full bg-slate-950 rounded-xl border border-emerald-500/30 py-6 mb-6 relative overflow-hidden">
+                  <div className="w-full bg-slate-950 rounded-xl border border-emerald-500/30 py-8 mb-8 relative overflow-hidden">
                     <div className="absolute inset-0 bg-emerald-500/10 blur-xl"></div>
-                    <p className="text-emerald-400/80 text-sm font-semibold uppercase tracking-widest mb-1 relative z-10">
+                    <p className="text-emerald-400/80 text-lg font-semibold uppercase tracking-widest mb-2 relative z-10">
                       তুমি পেয়েছো
                     </p>
-                    <div className="gold-foil-text text-5xl font-black relative z-10 drop-shadow-md flex items-center justify-center gap-2">
-                      <span className="text-3xl align-top">৳</span>
+                    <div className="gold-foil-text text-6xl font-black relative z-10 drop-shadow-md flex items-center justify-center gap-2">
+                      <span className="text-4xl align-top">৳</span>
                       {winningAmount}
                     </div>
                   </div>
