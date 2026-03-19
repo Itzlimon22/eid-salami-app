@@ -54,6 +54,11 @@ const SalamiWheelApp = () => {
   const isReceiverMode = derivedGiverName !== null && derivedMaxAmount !== null;
 
   const [activeSegments, setActiveSegments] = useState<number[]>([]);
+  // For organized display, keep a sorted version for rendering
+  const sortedSegments = React.useMemo(() => {
+    // Sort descending, but keep original order for state
+    return [...activeSegments].sort((a, b) => b - a);
+  }, [activeSegments]);
   const spinAudioRef = useRef<HTMLAudioElement | null>(null);
   const congratsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [giverInputName, setGiverInputName] = useState<string>("");
@@ -358,7 +363,7 @@ const SalamiWheelApp = () => {
                         transform: `rotate(${wheelRotationDegree}deg)`,
                       }}
                     >
-                      {activeSegments.map((amount, index) => {
+                      {sortedSegments.map((amount, index) => {
                         const rotation =
                           index * segmentAngle + segmentAngle / 2;
                         return (
