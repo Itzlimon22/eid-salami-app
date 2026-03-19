@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+// Sound effect URLs (replace with your own or royalty-free links if needed)
+const SPIN_SOUND_URL = "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae3e2.mp3"; // Example spin sound
+const CONGRATS_SOUND_URL = "https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b7bfa.mp3"; // Example congrats sound
 import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
@@ -49,6 +52,8 @@ const SalamiWheelApp = () => {
   const isReceiverMode = derivedGiverName !== null && derivedMaxAmount !== null;
 
   const [activeSegments, setActiveSegments] = useState<number[]>([]);
+  const spinAudioRef = useRef<HTMLAudioElement | null>(null);
+  const congratsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [giverInputName, setGiverInputName] = useState<string>("");
   const [maxAmountInput, setMaxAmountInput] = useState<string>("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -71,7 +76,7 @@ const SalamiWheelApp = () => {
   const totalSegments = activeSegments.length;
   const segmentAngle = totalSegments > 0 ? 360 / totalSegments : 0;
 
-  const handleGenerateLink = (e: React.FormEvent) => {
+  const handleGenerateLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!giverInputName.trim() || !maxAmountInput) return;
 
@@ -82,8 +87,22 @@ const SalamiWheelApp = () => {
     });
     const secretToken = btoa(encodeURIComponent(payload));
     const params = new URLSearchParams({ d: secretToken });
+    const longUrl = `${baseUrl}?${params.toString()}`;
 
-    setGeneratedLink(`${baseUrl}?${params.toString()}`);
+    // Try to shorten the link using is.gd API
+    try {
+      const res = await fetch(
+        `https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`,
+      );
+      if (res.ok) {
+        const shortUrl = await res.text();
+        setGeneratedLink(shortUrl);
+        return;
+      }
+    } catch (err) {
+      // fallback to long url
+    }
+    setGeneratedLink(longUrl);
   };
 
   const handleShareLink = async () => {
@@ -105,9 +124,18 @@ const SalamiWheelApp = () => {
   };
 
   const handleSpinWheel = () => {
-    if (!receiverName.trim() || isWheelSpinning || totalSegments === 0) return;
+    if (!receiverName.trim()) {
+      alert("আগে তোমার নাম লিখো!");
+      return;
+    }
+    if (isWheelSpinning || totalSegments === 0) return;
 
     setIsWheelSpinning(true);
+    // Play spin sound
+    if (spinAudioRef.current) {
+      spinAudioRef.current.currentTime = 0;
+      spinAudioRef.current.play();
+    }
 
     const randomIdx = Math.floor(Math.random() * totalSegments);
     const landingAngle = 360 - (randomIdx * segmentAngle + segmentAngle / 2);
@@ -126,6 +154,11 @@ const SalamiWheelApp = () => {
       setWinningAmount(activeSegments[randomIdx]);
       setWinningIndex(randomIdx);
       setShowModal(true);
+      // Play congrats sound
+      if (congratsAudioRef.current) {
+        congratsAudioRef.current.currentTime = 0;
+        congratsAudioRef.current.play();
+      }
     }, 10000);
   };
 
@@ -159,6 +192,9 @@ const SalamiWheelApp = () => {
 
   return (
     <>
+      {/* Audio elements for sound effects */}
+      <audio ref={spinAudioRef} src={SPIN_SOUND_URL} preload="auto" />
+      <audio ref={congratsAudioRef} src={CONGRATS_SOUND_URL} preload="auto" />
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -201,12 +237,12 @@ const SalamiWheelApp = () => {
         }}
       >
         {!isReceiverMode ? (
-          <div className="max-w-md w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 relative overflow-hidden">
+          <div className="max-w-md w-full bg-slate-900 rounded-2xl shadow-2xl p-4 sm:p-8 border border-slate-700 relative overflow-hidden">
             <Moon className="absolute -top-6 -right-6 text-white/10 w-32 h-32" />
-            <h1 className="text-4xl font-bold text-center text-white mb-2 relative z-10 font-eid tracking-wide">
+            <h1 className="text-2xl sm:text-4xl font-bold text-center text-white mb-2 relative z-10 font-eid tracking-wide">
               সেলামি Wheel
             </h1>
-            <p className="text-center text-slate-400 mb-8 text-sm relative z-10 leading-relaxed">
+            <p className="text-center text-slate-400 mb-6 sm:mb-8 text-xs sm:text-sm relative z-10 leading-relaxed">
               তোমার Highest Amount ঠিক করো।
             </p>
 
@@ -215,21 +251,21 @@ const SalamiWheelApp = () => {
               className="space-y-5 relative z-10"
             >
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-2">
                   তোমার নাম (যিনি সেলামি দিচ্ছেন)
                 </label>
                 <input
                   type="text"
                   required
                   maxLength={25}
-                  className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-sm sm:text-base"
                   placeholder="যেমন: Kuddus Bhai"
                   value={giverInputName}
                   onChange={(e) => setGiverInputName(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-2">
                   সর্বোচ্চ সেলামি (৳)
                 </label>
                 <input
@@ -237,7 +273,7 @@ const SalamiWheelApp = () => {
                   required
                   min="1"
                   max="100000"
-                  className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-white outline-none text-white transition-all font-medium text-sm sm:text-base"
                   placeholder="যেমন : 500"
                   value={maxAmountInput}
                   onChange={(e) => setMaxAmountInput(e.target.value)}
@@ -245,7 +281,7 @@ const SalamiWheelApp = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-white to-slate-100 hover:from-white/80 hover:to-slate-100/80 text-slate-900 font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-white/20 text-lg"
+                className="w-full bg-gradient-to-r from-white to-slate-100 hover:from-white/80 hover:to-slate-100/80 text-slate-900 font-bold py-2.5 sm:py-3.5 rounded-lg transition-all shadow-lg shadow-white/20 text-base sm:text-lg"
               >
                 লিংক তৈরি করো
               </button>
@@ -275,23 +311,23 @@ const SalamiWheelApp = () => {
             )}
           </div>
         ) : (
-          <div className="max-w-md w-full flex flex-col items-center">
+          <div className="max-w-md w-full flex flex-col items-center px-1 sm:px-0">
             <div
-              className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
+              className={`w-full bg-slate-900 rounded-2xl shadow-2xl p-4 sm:p-8 border border-slate-700 flex flex-col items-center relative overflow-hidden transition-all duration-500 ${showModal ? "blur-sm scale-[0.98]" : ""}`}
             >
               <Star className="absolute top-6 right-6 text-white/20 w-8 h-8" />
-              <h1 className="text-3xl font-bold text-center text-white mb-2 z-10 font-eid">
+              <h1 className="text-xl sm:text-3xl font-bold text-center text-white mb-2 z-10 font-eid">
                 সারপ্রাইজ ফ্রম {derivedGiverName}!
               </h1>
-              <p className="text-center text-slate-400 mb-8 z-10 text-sm">
+              <p className="text-center text-slate-400 mb-6 sm:mb-8 z-10 text-xs sm:text-sm">
                 তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
               </p>
 
-              <div className="w-full mb-8 z-10">
+              <div className="w-full mb-6 sm:mb-8 z-10">
                 <input
                   type="text"
                   maxLength={25}
-                  className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-xl font-bold text-white disabled:opacity-50"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-center text-base sm:text-xl font-bold text-white disabled:opacity-50"
                   placeholder="তোমার নাম লেখো..."
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
@@ -299,7 +335,7 @@ const SalamiWheelApp = () => {
                 />
               </div>
 
-              <div className="relative w-72 h-72 mb-8 z-10">
+              <div className="relative w-56 h-56 sm:w-72 sm:h-72 mb-6 sm:mb-8 z-10">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[14px] border-r-[14px] border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_4px_6px_rgba(255,255,255,0.8)]" />
 
                 {activeSegments.length > 0 ? (
@@ -324,7 +360,7 @@ const SalamiWheelApp = () => {
                             style={{ transform: `rotate(${rotation}deg)` }}
                           >
                             <span
-                              className="text-slate-100 font-bold text-[13px] tracking-widest realistic-text-shadow"
+                              className="text-slate-100 font-bold text-xs sm:text-[13px] tracking-widest realistic-text-shadow"
                               style={{
                                 writingMode: "vertical-rl",
                                 transform: "rotate(180deg)",
@@ -343,7 +379,7 @@ const SalamiWheelApp = () => {
                         isWheelSpinning ||
                         activeSegments.length === 0
                       }
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-gradient-to-br from-white to-slate-100 rounded-full border-[5px] border-slate-900 z-30 shadow-[0_4px_15px_rgba(0,0,0,0.8)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white to-slate-100 rounded-full border-[5px] border-slate-900 z-30 shadow-[0_4px_15px_rgba(0,0,0,0.8)] cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center justify-center text-slate-900 font-black text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       স্পিন
                     </button>
@@ -362,7 +398,7 @@ const SalamiWheelApp = () => {
                   isWheelSpinning ||
                   activeSegments.length === 0
                 }
-                className={`w-full font-bold py-3.5 rounded-lg transition-all text-white z-10 text-lg ${!receiverName.trim() || isWheelSpinning || activeSegments.length === 0 ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
+                className={`w-full font-bold py-2.5 sm:py-3.5 rounded-lg transition-all text-white z-10 text-base sm:text-lg ${!receiverName.trim() || isWheelSpinning || activeSegments.length === 0 ? "bg-slate-700 cursor-not-allowed text-slate-500" : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20"}`}
               >
                 {isWheelSpinning
                   ? "ঘুরছে..."
@@ -373,7 +409,7 @@ const SalamiWheelApp = () => {
 
               <button
                 onClick={() => (window.location.href = "/")}
-                className="w-full mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+                className="w-full mt-3 sm:mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-semibold py-2 px-3 sm:py-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 <Gift size={18} className="text-white" />
                 নিজে তৈরি করো
