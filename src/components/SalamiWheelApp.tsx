@@ -10,24 +10,15 @@ import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
 const generateWheelSegments = (maxAmount: number): number[] => {
-  return [
-    maxAmount,
-    Math.floor(maxAmount * 0.1) + 0.25,
-    Math.floor(maxAmount * 0.4) + 0.5,
-    10,
-    Math.floor(maxAmount * 0.25) + 0.75,
-    0,
-    Math.floor(maxAmount * 0.6) + 0.25,
-    Math.floor(maxAmount * 0.15) + 0.5,
-    Math.floor(maxAmount * 0.8) + 0.75,
-    20.5,
-    Math.floor(maxAmount * 0.35) + 0.25,
-    0,
-    Math.floor(maxAmount * 0.7) + 0.5,
-    Math.floor(maxAmount * 0.05) + 0.75,
-    Math.floor(maxAmount * 0.9) + 0.25,
-    5.75,
-  ];
+  // Uniformly distribute values from 0.25 to maxAmount (inclusive)
+  const segmentCount = 12; // You can adjust the number of segments
+  const minValue = 0.25;
+  const step = (maxAmount - minValue) / (segmentCount - 1);
+  const segments = Array.from({ length: segmentCount }, (_, i) =>
+    parseFloat((minValue + i * step).toFixed(2)),
+  );
+  // Remove any 0 values (shouldn't be any, but for safety)
+  return segments.filter((v) => v > 0);
 };
 
 const SalamiWheelApp = () => {
@@ -127,7 +118,7 @@ const SalamiWheelApp = () => {
       }
     }
     navigator.clipboard.writeText(generatedLink);
-    alert("ম্যাজিক লিংক কপি হয়েছে! মেসেঞ্জার বা হোয়াটসঅ্যাপে শেয়ার করো।");
+    alert("লিংক কপি হয়েছে! মেসেঞ্জার বা হোয়াটসঅ্যাপে শেয়ার করো।");
   };
 
   const handleSpinWheel = () => {
@@ -138,10 +129,21 @@ const SalamiWheelApp = () => {
     if (isWheelSpinning || totalSegments === 0) return;
 
     setIsWheelSpinning(true);
-    // Play spin sound
+    // Play spin sound (handle play errors for autoplay restrictions)
     if (spinAudioRef.current) {
       spinAudioRef.current.currentTime = 0;
-      spinAudioRef.current.play();
+      const playPromise = spinAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          const resume = () => {
+            spinAudioRef.current && spinAudioRef.current.play();
+            window.removeEventListener("click", resume);
+            window.removeEventListener("touchstart", resume);
+          };
+          window.addEventListener("click", resume);
+          window.addEventListener("touchstart", resume);
+        });
+      }
     }
 
     const randomIdx = Math.floor(Math.random() * totalSegments);
@@ -161,10 +163,21 @@ const SalamiWheelApp = () => {
       setWinningAmount(activeSegments[randomIdx]);
       setWinningIndex(randomIdx);
       setShowModal(true);
-      // Play congrats sound
+      // Play congrats sound (handle play errors for autoplay restrictions)
       if (congratsAudioRef.current) {
         congratsAudioRef.current.currentTime = 0;
-        congratsAudioRef.current.play();
+        const playPromise = congratsAudioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            const resume = () => {
+              congratsAudioRef.current && congratsAudioRef.current.play();
+              window.removeEventListener("click", resume);
+              window.removeEventListener("touchstart", resume);
+            };
+            window.addEventListener("click", resume);
+            window.addEventListener("touchstart", resume);
+          });
+        }
       }
     }, 10000);
   };
@@ -311,7 +324,7 @@ const SalamiWheelApp = () => {
                   <button
                     onClick={handleShareLink}
                     className="bg-emerald-600 text-white p-2 rounded hover:bg-emerald-500 transition-colors shadow-lg"
-                    title="শেয়ার করো"
+                    title="শেয়ার করো"
                   >
                     <Share2 size={20} />
                   </button>
@@ -327,12 +340,12 @@ const SalamiWheelApp = () => {
               <Star className="absolute top-6 right-6 text-white/20 w-8 h-8" />
               <h1 className="text-xl sm:text-3xl font-bold text-center text-white mb-2 z-10 font-eid">
                 <span className="text-2xl sm:text-3xl">
-                  সারপ্রাইজ ফ্রম {derivedGiverName}!
+                  সেলামি from {derivedGiverName}!
                 </span>
               </h1>
               <p className="text-center text-slate-400 mb-6 sm:mb-8 z-10 text-xs sm:text-sm">
                 <span className="text-base sm:text-sm">
-                  তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
+                  তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
                 </span>
               </p>
 
@@ -349,7 +362,7 @@ const SalamiWheelApp = () => {
               </div>
 
               <div className="relative w-72 h-72 sm:w-96 sm:h-96 mb-6 sm:mb-8 z-10">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[18px] border-r-[18px] border-t-[36px] sm:border-l-[14px] sm:border-r-[14px] sm:border-t-[28px] border-l-transparent border-r-transparent border-t-white drop-shadow-[0_4px_6px_rgba(255,255,255,0.8)]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[18px] border-r-[18px] border-t-[36px] sm:border-l-[14px] sm:border-r-[14px] sm:border-t-[28px] border-l-transparent border-r-transparent border-t-[#b91c1c] drop-shadow-[0_4px_6px_rgba(185,28,28,0.8)]" />
 
                 {activeSegments.length > 0 ? (
                   <>
