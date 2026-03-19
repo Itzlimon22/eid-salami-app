@@ -223,7 +223,7 @@ const SalamiWheelApp = () => {
                   required
                   maxLength={25}
                   className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-white transition-all font-medium"
-                  placeholder="যেমন: লিমন মামা"
+                  placeholder="যেমন: Kuddus Bhai"
                   value={giverInputName}
                   onChange={(e) => setGiverInputName(e.target.value)}
                 />
@@ -238,7 +238,7 @@ const SalamiWheelApp = () => {
                   min="10"
                   max="100000"
                   className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-white transition-all font-medium"
-                  placeholder="যেমন: ১০০০"
+                  placeholder="যেমন : 500"
                   value={maxAmountInput}
                   onChange={(e) => setMaxAmountInput(e.target.value)}
                 />
@@ -254,7 +254,7 @@ const SalamiWheelApp = () => {
             {generatedLink && (
               <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-emerald-500/30">
                 <p className="text-sm font-semibold text-emerald-400 mb-2">
-                  তোমার লিংক প্রস্তুত!
+                  লিংক প্রস্তুত!
                 </p>
                 <div className="flex gap-2">
                   <input
