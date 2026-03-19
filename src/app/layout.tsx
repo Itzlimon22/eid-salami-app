@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ঈদের সেলামি চরকা | Eid Salami Wheel",
+  title: "ঈদের সেলামি | Eid Salami",
   description: "Spin the wheel for your Eid Salami!",
   icons: {
     // This injects a high-quality Moon emoji as the browser favicon

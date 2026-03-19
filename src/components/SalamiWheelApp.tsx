@@ -204,11 +204,10 @@ const SalamiWheelApp = () => {
           <div className="max-w-md w-full bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700 relative overflow-hidden">
             <Moon className="absolute -top-6 -right-6 text-amber-500/10 w-32 h-32" />
             <h1 className="text-4xl font-bold text-center text-amber-400 mb-2 relative z-10 font-eid tracking-wide">
-              সেলামি চরকা
+              সেলামি Wheel
             </h1>
             <p className="text-center text-slate-400 mb-8 text-sm relative z-10 leading-relaxed">
-              তোমার বাজেট ঠিক করো। আমরা টাকার পরিমাণটি একটি গোপন লিংকে লুকিয়ে
-              রাখবো, যাতে সারপ্রাইজ নষ্ট না হয়!
+              তোমার Highest Amount ঠিক করো।
             </p>
 
             <form
@@ -248,14 +247,14 @@ const SalamiWheelApp = () => {
                 type="submit"
                 className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-amber-500/20 text-lg"
               >
-                গোপন লিংক তৈরি করো
+                লিংক তৈরি করো
               </button>
             </form>
 
             {generatedLink && (
               <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-emerald-500/30">
                 <p className="text-sm font-semibold text-emerald-400 mb-2">
-                  তোমার ম্যাজিক লিংক প্রস্তুত!
+                  তোমার লিংক প্রস্তুত!
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -285,7 +284,7 @@ const SalamiWheelApp = () => {
                 সারপ্রাইজ ফ্রম {derivedGiverName}!
               </h1>
               <p className="text-center text-slate-400 mb-8 z-10 text-sm">
-                তোমার নাম লিখে চরকা ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
+                তোমার নাম লিখে Wheel ঘুরিয়ে ঈদের ভাগ্য পরীক্ষা করো 🌙
               </p>
 
               <div className="w-full mb-8 z-10">
@@ -377,7 +376,7 @@ const SalamiWheelApp = () => {
                 className="w-full mt-4 bg-transparent border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
               >
                 <Gift size={18} className="text-amber-400" />
-                নিজে চরকা তৈরি করো
+                নিজে তৈরি করো
               </button>
             </div>
 
