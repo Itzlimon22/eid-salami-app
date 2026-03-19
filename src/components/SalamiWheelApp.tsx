@@ -10,15 +10,22 @@ import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
 const generateWheelSegments = (maxAmount: number): number[] => {
-  // Uniformly distribute values from 0.25 to maxAmount (inclusive)
-  const segmentCount = 12; // You can adjust the number of segments
-  const minValue = 0.25;
-  const step = (maxAmount - minValue) / (segmentCount - 1);
-  const segments = Array.from({ length: segmentCount }, (_, i) =>
-    parseFloat((minValue + i * step).toFixed(2)),
+  // 20 minimum amounts: .25, .50, .75, ... up to 5.0
+  const minSegments = Array.from({ length: 20 }, (_, i) =>
+    parseFloat(((i + 1) * 0.25).toFixed(2)),
   );
-  // Remove any 0 values (shouldn't be any, but for safety)
-  return segments.filter((v) => v > 0);
+  // If maxAmount <= 5, just return the minSegments up to maxAmount
+  if (maxAmount <= 5) {
+    return minSegments.filter((v) => v <= maxAmount);
+  }
+  // Otherwise, distribute the rest uniformly from 5.25 to maxAmount
+  const extraCount = 12; // You can adjust for more/less segments
+  const start = 5.25;
+  const step = (maxAmount - start) / (extraCount - 1);
+  const extraSegments = Array.from({ length: extraCount }, (_, i) =>
+    parseFloat((start + i * step).toFixed(2)),
+  );
+  return [...minSegments, ...extraSegments];
 };
 
 const SalamiWheelApp = () => {
