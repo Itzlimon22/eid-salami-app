@@ -10,17 +10,17 @@ import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
 const generateWheelSegments = (maxAmount: number): number[] => {
-  // 20 minimum amounts: .25, .50, .75, ... up to 5.0
-  const minSegments = Array.from({ length: 20 }, (_, i) =>
+  // 10 minimum amounts: .25, .50, .75, ... up to 2.5
+  const minSegments = Array.from({ length: 10 }, (_, i) =>
     parseFloat(((i + 1) * 0.25).toFixed(2)),
   );
-  // If maxAmount <= 5, just return the minSegments up to maxAmount
-  if (maxAmount <= 5) {
+  // If maxAmount <= 2.5, just return the minSegments up to maxAmount
+  if (maxAmount <= 2.5) {
     return minSegments.filter((v) => v <= maxAmount);
   }
-  // Otherwise, distribute the rest uniformly from 5.25 to maxAmount
-  const extraCount = 12; // You can adjust for more/less segments
-  const start = 5.25;
+  // Otherwise, distribute the rest uniformly from 2.75 to maxAmount
+  const extraCount = 5; // 10 + 5 = 15 segments total
+  const start = 2.75;
   const step = (maxAmount - start) / (extraCount - 1);
   const extraSegments = Array.from({ length: extraCount }, (_, i) =>
     parseFloat((start + i * step).toFixed(2)),
