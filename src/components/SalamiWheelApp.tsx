@@ -10,22 +10,20 @@ import { useSearchParams } from "next/navigation";
 import { Share2, Moon, Star, Gift, Trash2, RefreshCw } from "lucide-react";
 
 const generateWheelSegments = (maxAmount: number): number[] => {
-  // 10 minimum amounts: .25, .50, .75, ... up to 2.5
-  const minSegments = Array.from({ length: 10 }, (_, i) =>
-    parseFloat(((i + 1) * 0.25).toFixed(2)),
+  // Distribute 15 unique amounts uniformly from min to maxAmount
+  const min = 1;
+  const count = 15;
+  if (maxAmount < min) return [parseFloat(maxAmount.toFixed(2))];
+  if (maxAmount === min) return [min];
+  const step = (maxAmount - min) / (count - 1);
+  const segments = Array.from({ length: count }, (_, i) =>
+    parseFloat((min + i * step).toFixed(2)),
   );
-  // If maxAmount <= 2.5, just return the minSegments up to maxAmount
-  if (maxAmount <= 2.5) {
-    return minSegments.filter((v) => v <= maxAmount);
-  }
-  // Otherwise, distribute the rest uniformly from 2.75 to maxAmount
-  const extraCount = 5; // 10 + 5 = 15 segments total
-  const start = 2.75;
-  const step = (maxAmount - start) / (extraCount - 1);
-  const extraSegments = Array.from({ length: extraCount }, (_, i) =>
-    parseFloat((start + i * step).toFixed(2)),
+  // Ensure uniqueness and no values above maxAmount due to floating point
+  const uniqueSegments = Array.from(
+    new Set(segments.filter((v) => v <= maxAmount)),
   );
-  return [...minSegments, ...extraSegments];
+  return uniqueSegments;
 };
 
 const SalamiWheelApp = () => {
