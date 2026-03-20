@@ -82,10 +82,8 @@ const SalamiWheelApp = () => {
     if (!giverInputName.trim() || !maxAmountInput) return;
 
     const baseUrl = window.location.origin;
-    const payload = JSON.stringify({
-      g: giverInputName.trim(),
-      m: maxAmountInput,
-    });
+    // Use a compact payload: no whitespace, short keys, and number for m
+    const payload = `{"g":"${giverInputName.trim()}","m":${parseFloat(maxAmountInput)}}`;
     const secretToken = btoa(encodeURIComponent(payload));
     const params = new URLSearchParams({ d: secretToken });
     const longUrl = `${baseUrl}?${params.toString()}`;
@@ -485,7 +483,7 @@ const SalamiWheelApp = () => {
                   <div className="w-full bg-slate-950 rounded-xl border border-emerald-500/30 py-8 mb-8 relative overflow-hidden">
                     <div className="absolute inset-0 bg-emerald-500/10 blur-xl"></div>
                     <p className="text-emerald-400/80 text-lg font-semibold uppercase tracking-widest mb-2 relative z-10">
-                      তুমি পেয়েছো
+                      তোমার জন্য সেলামি
                     </p>
                     <div className="gold-foil-text text-6xl font-black relative z-10 drop-shadow-md flex items-center justify-center gap-2">
                       <span className="text-4xl align-top">৳</span>
