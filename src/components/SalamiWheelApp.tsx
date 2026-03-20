@@ -147,19 +147,8 @@ const SalamiWheelApp = () => {
       }
     }
 
-    // Weighted random: lower indices (lower amounts) are more likely
-    const weights = activeSegments.map((_, i) => totalSegments - i);
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    const rand = Math.random() * totalWeight;
-    let acc = 0;
-    let randomIdx = 0;
-    for (let i = 0; i < weights.length; i++) {
-      acc += weights[i];
-      if (rand < acc) {
-        randomIdx = i;
-        break;
-      }
-    }
+    // Uniform random: all segments equally likely
+    const randomIdx = Math.floor(Math.random() * activeSegments.length);
     const landingAngle = 360 - (randomIdx * segmentAngle + segmentAngle / 2);
 
     // --- BUG FIX: Absolute Rotation Math ---
