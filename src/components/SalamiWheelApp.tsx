@@ -52,11 +52,7 @@ const SalamiWheelApp = () => {
   const isReceiverMode = derivedGiverName !== null && derivedMaxAmount !== null;
 
   const [activeSegments, setActiveSegments] = useState<number[]>([]);
-  // For organized display, keep a sorted version for rendering
-  const sortedSegments = React.useMemo(() => {
-    // Sort descending, but keep original order for state
-    return [...activeSegments].sort((a, b) => b - a);
-  }, [activeSegments]);
+  // Use activeSegments directly for display and spin logic to ensure order matches
   const spinAudioRef = useRef<HTMLAudioElement | null>(null);
   const congratsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [giverInputName, setGiverInputName] = useState<string>("");
@@ -116,7 +112,7 @@ const SalamiWheelApp = () => {
       try {
         await navigator.share({
           title: "ঈদের সেলামি!",
-          text: `ঈদ মোবারক! ${giverInputName} লিংকে ঢুকে তোমার ভাগ্য পরীক্ষা করো! 🌙✨`,
+          text: `ঈদ মোবারক! লিংকে ঢুকে তোমার ভাগ্য পরীক্ষা করো! 🌙✨`,
           url: generatedLink,
         });
         return;
@@ -383,7 +379,7 @@ const SalamiWheelApp = () => {
                         transform: `rotate(${wheelRotationDegree}deg)`,
                       }}
                     >
-                      {sortedSegments.map((amount, index) => {
+                      {activeSegments.map((amount, index) => {
                         const rotation =
                           index * segmentAngle + segmentAngle / 2;
                         return (
